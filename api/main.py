@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 class Settings(BaseSettings):
     app_name: str = "Raven Dashboard API"
-    version: str = "0.1.0"
+    version: str = "0.2.0"
 
 class PrettyJSONResponse(Response):
     media_type = "application/json"

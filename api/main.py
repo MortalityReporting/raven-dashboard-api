@@ -1,13 +1,12 @@
 import json, typing
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Response, status
+from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from pydantic_settings import BaseSettings
-from starlette.responses import Response
-import requests
-import os
-from fastapi.staticfiles import StaticFiles
-from urllib.parse import urljoin
+from starlette.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from api.services.database import create_connection
+from api.services.fhir import getEventData
+from api.utils.token import VerifyToken, userHasScope
 from sqlalchemy import text, select
 from sqlalchemy.orm import Session
 
@@ -26,6 +25,12 @@ class PrettyJSONResponse(Response):
             separators=(", ", ": "),
         ).encode("utf-8")
 
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="token",
+    scopes={"admin": "Able to access admin panel."},
+)
+
+token_auth_scheme = HTTPBearer()
 settings = Settings()
 app = FastAPI()
 
@@ -52,3 +57,23 @@ async def getConfig(env: str = "dev"):
         return { 'error': f'No configuration for "{env}" found.'}
     else:
         return result[0]
+    
+@app.get("/admin-panel", response_class=PrettyJSONResponse)
+def private(response: JSONResponse, token: str= Depends(token_auth_scheme)):
+    """A valid access token is required to access this route"""
+    result = VerifyToken(token.credentials).verify()
+    scope_result = userHasScope("admin", result)
+
+    if result.get("status"):
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return result
+    
+    if not scope_result:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return {
+            "error": "Missing Permission",
+            "message": "Missing proper scopes to access administrative view, if this is a mistake please contact the Raven Administrators."
+        }
+
+    req = getEventData()
+    return req

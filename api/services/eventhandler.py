@@ -1,40 +1,17 @@
-import requests
-from requests.auth import HTTPBasicAuth
-import os
-from api.utils.setup import set_up
-import json
+from api.services.fhirclient import FhirClient
+
+'''
+Event Handler
+- Combines Questionnaire, QuestionnaireResponse, and Practitioner resources into an object suitable for Angular Material Tables.
+'''
 
 def getEventData():
-    config = set_up()
-    parsed_auth = config["RAVEN_FHIR_SERVER_BASIC_AUTH"].split(":")
-    mdi_fhir_server = config["RAVEN_FHIR_SERVER"]
-    auth = HTTPBasicAuth(parsed_auth[0], parsed_auth[1])
-    practitioners = requests.get(f'{mdi_fhir_server}/Practitioner?identifier:of-type=%7Craven-user%7C', auth=auth)
-    questionnaires = requests.get(f'{mdi_fhir_server}/Questionnaire', auth=auth)
-    questionnaireResponses = requests.get(f'{mdi_fhir_server}/QuestionnaireResponse', auth=auth)
-    # merged_bundle = mergeBundles([practitioners.json(), questionnaires.json(), questionnaireResponses.json()])
-    events_flat = flattenBundle(questionnaires.json())
-    registrations_flat = flattenBundle(questionnaireResponses.json())
-    users_flat = flattenBundle(practitioners.json())
-
+    fhirclient = FhirClient()
+    users_flat = fhirclient.searchResource("Practitioner?identifier:of-type=%7Craven-user%7C", flatten=True)# requests.get(f'{mdi_fhir_server}/Practitioner?identifier:of-type=%7Craven-user%7C', auth=auth)
+    events_flat = fhirclient.searchResource("Questionnaire", flatten=True)
+    registrations_flat = fhirclient.searchResource("QuestionnaireResponse", flatten=True)
     parsed = parseEventData(events_flat, registrations_flat, users_flat)
     return parsed
-
-def mergeBundles(bundles: list):
-    merged_bundle = {
-        "resourceType": "Bundle",
-        "type": "collection",
-        "entry": []
-    }
-    for bundle in bundles:
-        merged_bundle["entry"] += bundle["entry"]
-    return merged_bundle
-
-def flattenBundle(bundle):
-    resource_list = []
-    for entry in bundle['entry']:
-        resource_list.append(entry["resource"])
-    return resource_list
 
 def parseEventData(events: list, registrations: list, users: list):
     event_data = {"events": []}

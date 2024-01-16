@@ -14,10 +14,13 @@ from sqlalchemy.orm import Session
 from fastapi.responses import FileResponse
 import api.models.DocumentReference as DocRef
 from api.services.fhirclient import FhirClient
+import os
+from api.services.miniohandler import MinioClient
+from api.constants import ERRORS
 
 class Settings(BaseSettings):
     app_name: str = "Raven Dashboard API"
-    version: str = "0.2.0"
+    version: str = "0.3.0"
 
 class PrettyJSONResponse(Response):
     media_type = "application/json"
@@ -38,6 +41,7 @@ oauth2_scheme = OAuth2PasswordBearer(
 token_auth_scheme = HTTPBearer()
 settings = Settings()
 fhir_client = FhirClient()
+minio_client = MinioClient()
 
 app = FastAPI()
 
@@ -49,11 +53,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+"""
+Provides basic information about the application.
+"""
 @app.get("/info", response_class=PrettyJSONResponse)
 async def info():
     return {"Application": settings.app_name, "Version": settings.version}
 
+"""
+This endpoint provides the configuration for the Raven Dashboard and does not contain sensitive information.
+"""
 @app.get("/config", response_class=PrettyJSONResponse)
 async def getConfig(env: str = "dev"):
     engine = create_connection(True)
@@ -64,7 +73,10 @@ async def getConfig(env: str = "dev"):
         return { 'error': f'No configuration for "{env}" found.'}
     else:
         return result[0]
-    
+
+"""
+Provides access to the Admin Panel for verified users.
+"""
 @app.get("/admin-panel", response_class=PrettyJSONResponse)
 async def getAdminPanel(response: JSONResponse, token: str= Depends(token_auth_scheme)):
     """A valid access token is required to access this route"""
@@ -78,35 +90,20 @@ async def getAdminPanel(response: JSONResponse, token: str= Depends(token_auth_s
     if not scope_result:
         response.status_code = status.HTTP_403_FORBIDDEN
         return {
-            "error": "Missing Permission",
-            "message": "Missing proper scopes to access administrative view, if this is a mistake please contact the Raven Administrators."
+            "code": response.status_code,
+            "error": ERRORS['SECURITY_ERRORS']['MISSING_PERMISSIONS']['NAME'],
+            "message": ERRORS['SECURITY_ERRORS']['MISSING_PERMISSIONS']['DESC'],
         }
 
     req = getEventData()
     return req
 
 
-
+"""
+Allows users to upload a file from a test to Minio.
+"""
 @app.post("/document", response_class=PrettyJSONResponse)
-async def postDocument(file: UploadFile, userId: Annotated[str, Form()], registrationId: Annotated[str, Form()]):
-    try:
-        file_name = writeFileToDisk(file)
-        file_attachment: DocRef.Attachment = DocRef.Attachment(file_name)
-        content: DocRef.Content = DocRef.Content(file_attachment)
-        reference: DocRef.Reference = DocRef.Reference(f'Practitioner/{userId}')
-        docref = DocRef.DocumentReference(reference, content)
-        fhir_response = fhir_client.createResource("DocumentReference", docref.toJSON())
-    except HTTPException as e:
-        raise e
-    else:
-        return {
-                "details": f'Successfully uploaded {file.filename}.',
-                "resource": docref,
-                "response": fhir_response
-            }
-
-@app.get("/document")
-async def getDocument(file_name: str, response: JSONResponse, token: str= Depends(token_auth_scheme)):
+async def postFile(file: UploadFile, event: str, response: JSONResponse, token: str = Depends(token_auth_scheme)):
     """A valid access token is required to access this route"""
     result = VerifyToken(token.credentials).verify()
     if result.get("status"):
@@ -117,7 +114,51 @@ async def getDocument(file_name: str, response: JSONResponse, token: str= Depend
     if not scope_result:
         response.status_code = status.HTTP_403_FORBIDDEN
         return {
-            "error": "Missing Permission",
-            "message": "Missing proper scopes to access files, if this is a mistake please contact the Raven Administrators."
+            "code": response.status_code,
+            "error": ERRORS['SECURITY_ERRORS']['MISSING_PERMISSIONS']['NAME'],
+            "message": ERRORS['SECURITY_ERRORS']['MISSING_PERMISSIONS']['DESC'],
+        }
+    try: 
+        result = minio_client.uploadToMinio(file=file, bucket_name=event)
+    except HTTPException as e:
+        raise e
+    else:
+        return {
+            "bucket": result.bucket_name,
+            "filename": result.object_name
+        }
+
+@app.get("/document")
+async def getFile(file_name: str, event: str, response: JSONResponse, token: str= Depends(token_auth_scheme)):
+    """A valid access token is required to access this route"""
+    result = VerifyToken(token.credentials).verify()
+    if result.get("status"):
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return result
+    
+    scope_result = userHasScope("admin", result)
+    if not scope_result:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        print(ERRORS)
+        return {
+            "code": response.status_code,
         }
     return FileResponse(f"users/{file_name}")
+
+@app.get("/document/all")
+async def getAllDocuments(response: JSONResponse, token: str= Depends(token_auth_scheme)):
+    result = VerifyToken(token.credentials).verify()
+    if result.get("status"):
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return result
+    
+    scope_result = userHasScope("admin", result)
+    if not scope_result:
+        response.status_code = status.HTTP_403_FORBIDDEN
+        return {
+            "code": response.status_code,
+            "error": ERRORS['SECURITY_ERRORS']['MISSING_PERMISSIONS']['NAME'],
+            "message": ERRORS['SECURITY_ERRORS']['MISSING_PERMISSIONS']['DESC'],
+        }
+    file_list = os.listdir("users")
+    return (file_list)

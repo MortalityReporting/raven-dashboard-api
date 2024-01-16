@@ -8,6 +8,9 @@ Event Handler
 def getEventData():
     fhirclient = FhirClient()
     users_flat = fhirclient.searchResource("Practitioner?identifier:of-type=%7Craven-user%7C", flatten=True)# requests.get(f'{mdi_fhir_server}/Practitioner?identifier:of-type=%7Craven-user%7C', auth=auth)
+    print(users_flat)
+    print("---------------")
+    print(len(users_flat))
     events_flat = fhirclient.searchResource("Questionnaire", flatten=True)
     registrations_flat = fhirclient.searchResource("QuestionnaireResponse", flatten=True)
     parsed = parseEventData(events_flat, registrations_flat, users_flat)
@@ -30,12 +33,18 @@ def parseEventData(events: list, registrations: list, users: list):
 
         for reg in this_events_registrations:
             subject_id = reg['subject']['reference'].split("/")[-1]
-            user = list(filter(lambda user: find_user(user, subject_id), users))[0]
+
+            user = list(filter(lambda user: find_user(user, subject_id), users))
+            if not user:
+                break
+            user = user[0]
             row_obj = {
                 "name": user['name'][0]['text'],
                 "email": user['telecom'][0]['value'],
+                "registrationId": reg['id']
             }
             for reg_item in reg['item']:
+                print(reg_item)
                 row_obj[reg_item["linkId"]] = reg_item["answer"][0]["valueCoding"]["code"]
             
             event_obj['rows'].append(row_obj)
@@ -53,4 +62,6 @@ def filter_by_event(registration, event_id):
 # Filter Users by Registration Subject, for use in filter()
 def find_user(user, subject_id):
     user_id = user['id']
+    value = user_id == subject_id
+    print(value)
     return user_id == subject_id

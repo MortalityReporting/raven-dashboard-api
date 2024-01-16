@@ -5,7 +5,7 @@ def set_up():
     config = {
         "DB_CONN_STRING": os.getenv("DB_CONN_STRING"),
         "RAVEN_FHIR_SERVER": os.getenv("RAVEN_FHIR_SERVER"),
-        "RAVEN_FHIR_SERVER_BASIC_AUTH": os.getenv("RAVEN_FHIR_SERVER_BASIC_AUTH")
+        "RAVEN_FHIR_SERVER_BASIC_AUTH": os.getenv("RAVEN_FHIR_SERVER_BASIC_AUTH"),
     }
     return config
  
@@ -15,6 +15,15 @@ def set_up_token():
         "DOMAIN": os.getenv("DOMAIN", "your.domain.com"),
         "API_AUDIENCE": os.getenv("API_AUDIENCE", "your.audience.com"),
         "ISSUER": os.getenv("ISSUER", "https://your.domain.com/"),
-        "ALGORITHMS": os.getenv("ALGORITHMS", "RS256"),
+        "ALGORITHMS": os.getenv("ALGORITHMS", "RS256")
+    }
+    return config
+
+def set_up_minio():
+    """Sets up configuration for Minio Client"""
+    config = {
+        "ENDPOINT": os.getenv("MINIO_ENDPOINT"),
+        "USER": os.getenv("MINIO_USER"),
+        "SECRET": os.getenv("MINIO_SECRET")
     }
     return config

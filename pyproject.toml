@@ -21,6 +21,7 @@ SQLAlchemy = "2.0.19"
 psycopg2-binary = "2.9.6"
 PyJWT = "2.8.0"
 python-multipart = "0.0.6"
+minio = "^7.2.3"
 
 [build-system]
 requires = ["poetry-core"]

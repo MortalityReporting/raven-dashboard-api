@@ -7,7 +7,6 @@ from os import getenv
 def create_connection(return_engine: bool = False) -> Engine | Connection | str:
     '''Create a connection and return either the connection or the engine'''
     db_conn_string = getenv("DB_CONN_STRING")
-    print(db_conn_string)
     engine: Engine = create_engine(db_conn_string, echo=True)
     try:
         connection: Connection = engine.connect()

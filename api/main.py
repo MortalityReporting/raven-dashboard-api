@@ -103,7 +103,7 @@ async def getAdminPanel(response: JSONResponse, token: str= Depends(token_auth_s
 Allows users to upload a file from a test to Minio.
 """
 @app.post("/document", response_class=PrettyJSONResponse)
-async def postFile(file: UploadFile, event: str, response: JSONResponse, token: str = Depends(token_auth_scheme)):
+async def postFile(file: UploadFile, event: Annotated[str, Form()], response: JSONResponse, token: str = Depends(token_auth_scheme)):
     """A valid access token is required to access this route"""
     result = VerifyToken(token.credentials).verify()
     if result.get("status"):

@@ -139,9 +139,11 @@ async def getFile(bucket: Annotated[str, Form()], filename: Annotated[str, Form(
     scope_result = userHasScope("admin", result)
     if not scope_result:
         response.status_code = status.HTTP_403_FORBIDDEN
-        print(ERRORS)
         return {
             "code": response.status_code,
+            "error": ERRORS['SECURITY_ERRORS']['MISSING_PERMISSIONS']['NAME'],
+            "message": ERRORS['SECURITY_ERRORS']['MISSING_PERMISSIONS']['DESC'],
         }
+    
     minio_client.downloadFromMinio(bucket, filename)
     return FileResponse(filename)

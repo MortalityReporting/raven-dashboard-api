@@ -24,5 +24,6 @@ class MinioClient():
             result = self.client.put_object(bucket_name, file.filename, file.file, file.size)
             return result
 
-        def downloadFromMinio(bucket_name: str, file_name: str):
-            pass
+        def downloadFromMinio(self, bucket_name: str, file_name: str):
+            result = self.client.fget_object(bucket_name, file_name, file_name)
+            return result

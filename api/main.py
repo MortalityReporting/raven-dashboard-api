@@ -129,7 +129,7 @@ async def postFile(file: UploadFile, event: Annotated[str, Form()], response: JS
         }
 
 @app.get("/document")
-async def getFile(bucket: str, filename: str, response: JSONResponse, token: str= Depends(token_auth_scheme)):
+async def getFile(bucket: Annotated[str, Form()], filename: Annotated[str, Form()], response: JSONResponse, token: str= Depends(token_auth_scheme)):
     # """A valid access token is required to access this route"""
     # result = VerifyToken(token.credentials).verify()
     # if result.get("status"):
@@ -143,22 +143,5 @@ async def getFile(bucket: str, filename: str, response: JSONResponse, token: str
     #     return {
     #         "code": response.status_code,
     #     }
-    return FileResponse(f"users/{filename}")
-
-@app.get("/document/all")
-async def getAllDocuments(response: JSONResponse, token: str= Depends(token_auth_scheme)):
-    result = VerifyToken(token.credentials).verify()
-    if result.get("status"):
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return result
-    
-    scope_result = userHasScope("admin", result)
-    if not scope_result:
-        response.status_code = status.HTTP_403_FORBIDDEN
-        return {
-            "code": response.status_code,
-            "error": ERRORS['SECURITY_ERRORS']['MISSING_PERMISSIONS']['NAME'],
-            "message": ERRORS['SECURITY_ERRORS']['MISSING_PERMISSIONS']['DESC'],
-        }
-    file_list = os.listdir("users")
-    return (file_list)
+    minio_client.downloadFromMinio(bucket, filename)
+    return FileResponse(filename)

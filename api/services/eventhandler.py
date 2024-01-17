@@ -41,11 +41,13 @@ def parseEventData(events: list, registrations: list, users: list):
             row_obj = {
                 "name": user['name'][0]['text'],
                 "email": user['telecom'][0]['value'],
-                "registrationId": reg['id']
+                "registrationId": reg['id'],
+                "attachments": {}
             }
             for reg_item in reg['item']:
-                print(reg_item)
                 row_obj[reg_item["linkId"]] = reg_item["answer"][0]["valueCoding"]["code"]
+                if "extension" in reg_item:
+                    row_obj["attachments"][reg_item["linkId"]] = reg_item["extension"][0]["valueAttachment"]["url"]
             
             event_obj['rows'].append(row_obj)
         event_data["events"].append(event_obj)
@@ -55,13 +57,10 @@ def parseEventData(events: list, registrations: list, users: list):
 # Filter Registrations by Event, for use in filter()
 def filter_by_event(registration, event_id):
     questionnaire_reference_id = registration['questionnaire'].split("/")[-1]
-    print(questionnaire_reference_id)
-    print(event_id)
     return questionnaire_reference_id == event_id
 
 # Filter Users by Registration Subject, for use in filter()
 def find_user(user, subject_id):
     user_id = user['id']
     value = user_id == subject_id
-    print(value)
-    return user_id == subject_id
+    return value

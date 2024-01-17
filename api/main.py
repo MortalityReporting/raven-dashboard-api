@@ -102,7 +102,7 @@ async def getAdminPanel(response: JSONResponse, token: str= Depends(token_auth_s
 """
 Allows users to upload a file from a test to Minio.
 """
-@app.post("/document", response_class=PrettyJSONResponse)
+@app.post("/attachment/upload", response_class=PrettyJSONResponse)
 async def postFile(file: UploadFile, event: Annotated[str, Form()], response: JSONResponse, token: str = Depends(token_auth_scheme)):
     """A valid access token is required to access this route"""
     result = VerifyToken(token.credentials).verify()
@@ -128,7 +128,7 @@ async def postFile(file: UploadFile, event: Annotated[str, Form()], response: JS
             "filename": result.object_name
         }
 
-@app.get("/document")
+@app.post("/attachment/download")
 async def getFile(bucket: Annotated[str, Form()], filename: Annotated[str, Form()], response: JSONResponse, token: str= Depends(token_auth_scheme)):
     """A valid access token is required to access this route"""
     result = VerifyToken(token.credentials).verify()

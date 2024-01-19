@@ -45,6 +45,8 @@ def parseEventData(events: list, registrations: list, users: list):
                 "attachments": {}
             }
             for reg_item in reg['item']:
+                # TODO: Add Handling in case "code" (status) is missing, check for key first then provide unknown status if not
+                # present.
                 row_obj[reg_item["linkId"]] = reg_item["answer"][0]["valueCoding"]["code"]
                 if "extension" in reg_item:
                     row_obj["attachments"][reg_item["linkId"]] = reg_item["extension"][0]["valueAttachment"]["url"]

@@ -1,8 +1,8 @@
 {
     "resourceType": "Questionnaire",
     "id": "example",
-    "name": "ExampleTestingEvent01012024",
-    "title": "Example Testing Event - Jan 24, 2024",
+    "name": "Jan2024MortalityDataValidationTrack",
+    "title": "Jan 2024 - Mortality Data Validation Track",
     "status": "active",
     "subjectType": [ "Practitioner" ],
     "item": [ {
@@ -13,6 +13,12 @@
       } ],
       "text": "Validation",
       "type": "choice",
-      "answerValueSet": "https://raven.dev.heat.icl.gtri.org/mdi-fhir-server/fhir/ValueSet/624453"
+      "answerValueSet": "https://raven.dev.heat.icl.gtri.org/mdi-fhir-server/fhir/ValueSet/624453",
+      "extension": [
+        {
+            "url": "description",
+            "valueString": "Submit validation results for the VRDR or MDI data generated from the provided test case. Launching this test will provide detailed instructions.."
+        }
+    ]
     }]
   }

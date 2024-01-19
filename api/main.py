@@ -110,14 +110,6 @@ async def postFile(file: UploadFile, event: Annotated[str, Form()], response: JS
         response.status_code = status.HTTP_400_BAD_REQUEST
         return result
     
-    scope_result = userHasScope("admin", result)
-    if not scope_result:
-        response.status_code = status.HTTP_403_FORBIDDEN
-        return {
-            "code": response.status_code,
-            "error": ERRORS['SECURITY_ERRORS']['MISSING_PERMISSIONS']['NAME'],
-            "message": ERRORS['SECURITY_ERRORS']['MISSING_PERMISSIONS']['DESC'],
-        }
     try: 
         result = minio_client.uploadToMinio(file=file, bucket_name=event)
     except HTTPException as e:

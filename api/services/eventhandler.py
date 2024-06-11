@@ -7,12 +7,12 @@ Event Handler
 
 def getEventData():
     fhirclient = FhirClient()
-    users_flat = fhirclient.searchResource("Practitioner?identifier:of-type=%7Craven-user%7C", flatten=True)# requests.get(f'{mdi_fhir_server}/Practitioner?identifier:of-type=%7Craven-user%7C', auth=auth)
+    users_flat = fhirclient.searchResource("Practitioner?_count=100&identifier:of-type=%7Craven-user%7C", flatten=True)# requests.get(f'{mdi_fhir_server}/Practitioner?identifier:of-type=%7Craven-user%7C', auth=auth)
     print(users_flat)
     print("---------------")
     print(len(users_flat))
-    events_flat = fhirclient.searchResource("Questionnaire", flatten=True)
-    registrations_flat = fhirclient.searchResource("QuestionnaireResponse", flatten=True)
+    events_flat = fhirclient.searchResource("Questionnaire?_count=100", flatten=True)
+    registrations_flat = fhirclient.searchResource("QuestionnaireResponse?_count=100", flatten=True)
     parsed = parseEventData(events_flat, registrations_flat, users_flat)
     return parsed
 

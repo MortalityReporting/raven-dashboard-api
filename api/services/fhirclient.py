@@ -25,7 +25,7 @@ class FhirClient():
         return {}
 
     def searchResource(self, resource_type, parameters = None, flatten = False):
-        searchset = requests.get(f'{self.server_base}/{resource_type}?_count=100', auth=self.basic_auth).json()
+        searchset = requests.get(f'{self.server_base}/{resource_type}', auth=self.basic_auth).json()
         if flatten:
             resource_list = []
             for entry in searchset['entry']:

@@ -17,6 +17,7 @@ from api.services.fhirclient import FhirClient
 import os
 from api.services.miniohandler import MinioClient
 from api.constants import ERRORS
+from api.routers import passthrough
 
 class Settings(BaseSettings):
     app_name: str = "Raven Dashboard API"
@@ -52,6 +53,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(passthrough.router)
 
 """
 Provides basic information about the application.

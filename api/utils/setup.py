@@ -8,7 +8,6 @@ def set_up():
         "RAVEN_FHIR_SERVER_BASIC_AUTH": os.getenv("RAVEN_FHIR_SERVER_BASIC_AUTH"),
         "UPLOAD_FILE_PASSTHROUGH_URL": os.getenv("UPLOAD_FILE_PASSTHROUGH_URL"),
     }
-    print(config)
     return config
  
 def set_up_token():

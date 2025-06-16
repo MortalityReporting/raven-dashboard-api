@@ -55,7 +55,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# config = set_up()
+config = set_up()
 
 
 """
@@ -146,20 +146,20 @@ async def getFile(bucket: Annotated[str, Form()], filename: Annotated[str, Form(
     return FileResponse(filename)
 
 
-# @app.api_route("/passthrough/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
-# async def passthrough(path, request: Request):
-#     client = AsyncClient()
-#     url = f"{config['UPLOAD_FILE_PASSTHROUGH_URL']}/{path}"
+@app.api_route("/passthrough/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def passthrough(path, request: Request):
+    client = AsyncClient()
+    url = f"{config['UPLOAD_FILE_PASSTHROUGH_URL']}/{path}"
 
-#     req = client.build_request(
-#         request.method, 
-#         url,
-#         headers=request.headers.raw,
-#         params=request.query_params,
-#         content=await request.body()
-#     )
+    req = client.build_request(
+        request.method, 
+        url,
+        headers=request.headers.raw,
+        params=request.query_params,
+        content=await request.body()
+    )
 
-#     resp = await client.send(req)
-#     await client.aclose()
+    resp = await client.send(req)
+    await client.aclose()
     
-#     return Response(resp.content, status_code=resp.status_code, headers=resp.headers)
+    return Response(resp.content, status_code=resp.status_code, headers=resp.headers)

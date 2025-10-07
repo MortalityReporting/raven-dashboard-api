@@ -2,6 +2,7 @@
 
 # local environment
 .env
+local.sh
 
 # python
 *.pyc

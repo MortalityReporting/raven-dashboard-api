@@ -139,3 +139,8 @@ async def getFile(bucket: Annotated[str, Form()], filename: Annotated[str, Form(
     
     minio_client.downloadFromMinio(bucket, filename)
     return FileResponse(filename)
+
+@app.get("/files/TerminologyServicePoC.pdf")
+async def getFile(bucket: Annotated[str, Form()], filename: Annotated[str, Form()], response: JSONResponse):
+    minio_client.downloadFromMinio("static", "TerminologyServicePoC.pdf")
+    return FileResponse(filename)

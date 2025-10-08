@@ -1,6 +1,6 @@
 import json, typing
 from typing import Annotated
-from fastapi import Depends, FastAPI, File, UploadFile, Response, status, HTTPException, Form
+from fastapi import Depends, FastAPI, File, UploadFile, Response, Request, status, HTTPException, Form
 from fastapi.security import HTTPBearer, OAuth2PasswordBearer
 from pydantic_settings import BaseSettings
 from starlette.responses import JSONResponse
@@ -19,6 +19,8 @@ from api.services.miniohandler import MinioClient
 from api.constants import ERRORS
 from io import BytesIO
 
+from api.utils.setup import set_up
+from httpx import AsyncClient
 
 class Settings(BaseSettings):
     app_name: str = "Raven Dashboard API"
@@ -54,6 +56,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+config = set_up()
+
 
 """
 Provides basic information about the application.
@@ -153,3 +158,21 @@ async def getFile():
         "Content-Disposition": f"attachment; filename=\"{filename}\""
     }
     return StreamingResponse(response, headers=headers)
+
+@app.api_route("/passthrough/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def passthrough(path, request: Request):
+    client = AsyncClient()
+    url = f"{config['UPLOAD_FILE_PASSTHROUGH_URL']}/{path}"
+
+    req = client.build_request(
+        request.method, 
+        url,
+        headers=request.headers.raw,
+        params=request.query_params,
+        content=await request.body()
+    )
+
+    resp = await client.send(req)
+    await client.aclose()
+    
+    return Response(resp.content, status_code=resp.status_code, headers=resp.headers)

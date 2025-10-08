@@ -6,6 +6,7 @@ def set_up():
         "DB_CONN_STRING": os.getenv("DB_CONN_STRING"),
         "RAVEN_FHIR_SERVER": os.getenv("RAVEN_FHIR_SERVER"),
         "RAVEN_FHIR_SERVER_BASIC_AUTH": os.getenv("RAVEN_FHIR_SERVER_BASIC_AUTH"),
+        "UPLOAD_FILE_PASSTHROUGH_URL": os.getenv("UPLOAD_FILE_PASSTHROUGH_URL"),
     }
     return config
  

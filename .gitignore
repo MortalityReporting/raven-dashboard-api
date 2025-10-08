@@ -4,6 +4,9 @@
 .env
 local.sh
 
+# local build and run script
+run.sh
+
 # python
 *.pyc
 __pycache__/

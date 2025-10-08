@@ -11,12 +11,14 @@ from api.utils.token import VerifyToken, userHasScope
 from api.utils.file_writer import writeFileToDisk
 from sqlalchemy import text, select
 from sqlalchemy.orm import Session
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 import api.models.DocumentReference as DocRef
 from api.services.fhirclient import FhirClient
 import os
 from api.services.miniohandler import MinioClient
 from api.constants import ERRORS
+from io import BytesIO
+
 
 class Settings(BaseSettings):
     app_name: str = "Raven Dashboard API"
@@ -121,7 +123,7 @@ async def postFile(file: UploadFile, event: Annotated[str, Form()], response: JS
         }
 
 @app.post("/attachment/download")
-async def getFile(bucket: Annotated[str, Form()], filename: Annotated[str, Form()], response: JSONResponse, token: str= Depends(token_auth_scheme)):
+async def getFile(bucket: Annotated[str, Form()], filename: Annotated[str, Form()], response: StreamingResponse, token: str= Depends(token_auth_scheme)):
     """A valid access token is required to access this route"""
     result = VerifyToken(token.credentials).verify()
     if result.get("status"):
@@ -137,10 +139,17 @@ async def getFile(bucket: Annotated[str, Form()], filename: Annotated[str, Form(
             "message": ERRORS['SECURITY_ERRORS']['MISSING_PERMISSIONS']['DESC'],
         }
     
-    minio_client.downloadFromMinio(bucket, filename)
-    return FileResponse(filename)
+    response = minio_client.downloadFromMinio(bucket, filename)
+    headers =  {
+        "Content-Disposition": f"attachment; filename=\"{filename}\""
+    }
+    return StreamingResponse(response, headers=headers)
 
 @app.get("/files/TerminologyServicePoC.pdf")
-async def getFile(bucket: Annotated[str, Form()], filename: Annotated[str, Form()], response: JSONResponse):
-    minio_client.downloadFromMinio("static", "TerminologyServicePoC.pdf")
-    return FileResponse(filename)
+async def getFile():
+    filename = "TerminologyServicePoC.pdf"
+    response = minio_client.downloadFromMinio("static", filename)
+    headers =  {
+        "Content-Disposition": f"attachment; filename=\"{filename}\""
+    }
+    return StreamingResponse(response, headers=headers)

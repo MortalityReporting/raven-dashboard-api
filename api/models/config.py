@@ -1,9 +1,5 @@
-from sqlalchemy import select, and_, or_, func, update, delete, Column
-from sqlalchemy import JSON, Column, String, MetaData
+from sqlalchemy import JSON, String, MetaData
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
-
-from fastapi import Query
-from fastapi.responses import JSONResponse
 
 class Base(DeclarativeBase):
     metadata_obj: MetaData = MetaData(schema="dashboard")
